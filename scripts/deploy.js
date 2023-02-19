@@ -4,23 +4,30 @@
 // You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
+const { ethers } = require("hardhat");
 const hre = require("hardhat");
+const { ThemeProvider } = require("styled-components");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const [deployer] = await ethers.getSigners();
+  console.log('Deploying contracts with the account: ' + deployer.address);
 
-  const lockedAmount = hre.ethers.utils.parseEther("1");
+  // Deploy First
+  const BusinessNFT = await ethers.getContractFactory('BusinessNFT');
+  const businessNFT = await BusinessNFT.deploy();
 
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  // Deploy Second
+  const productNFT = await ethers.getContractFactory('productNFT');
+  const productnft = await productNFT.deploy(businessNFT.address);
 
-  await lock.deployed();
+  // Deploy Third
 
-  console.log(
-    `Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+  const Vault = await ethers.getContractFactory('Vault');
+  const vault = await Vault.deploy(productnft.address)
+
+  console.log( "BusinessNFT: " + businessNFT.address );
+  console.log( "ProductNFT: " + productnft.address ); 
+  console.log( "Vault: " + vault.address )
 }
 
 // We recommend this pattern to be able to use async/await everywhere
