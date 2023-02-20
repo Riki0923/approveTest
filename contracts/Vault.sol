@@ -107,7 +107,7 @@ contract Vault {
 
     constructor(address _productAddress){
         setContracts(_productAddress);
-        daiTokenVault = DaiTokenVault(0xF14f9596430931E177469715c591513308244e8F);
+        daiTokenVault = DaiTokenVault(0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F);
         iLendingPool = ILendingPool(0x0b913A76beFF3887d35073b8e5530755D60F78C7);
         usdcVault = UsdcTokenVault(0xe9DcE89B076BA6107Bb64EF30678efec11939234);
         // usdc erc20 contract: 0x2058A9D7613eEE744279e3856Ef0eAda5FCbaA7e
@@ -121,8 +121,8 @@ contract Vault {
         require(_productNFT.getOwnerOfService(serviceId) != msg.sender, "You cannot buy your own service");
         // require for nonexistentBusiness
         uint256 price = _productNFT.getPriceForAService(serviceId);
-        require(daiTokenVault.balanceOf(msg.sender) >= price, "you want to pay less than the actual price");
-        require(daiTokenVault.allowance(msg.sender, address(this)) >= price, "You don't have enough allowance to buy this product");
+        // require(daiTokenVault.balanceOf(msg.sender) >= price, "you want to pay less than the actual price");
+        // require(daiTokenVault.allowance(msg.sender, address(this)) >= price, "You don't have enough allowance to buy this product");
         address  receiver = _productNFT.getOwnerOfService(serviceId);
 
         daiTokenVault.transferFrom(msg.sender, receiver, price / 10 * 9);
