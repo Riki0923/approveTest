@@ -6,21 +6,21 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "./PunkCities.sol";
 
 
-interface DaiToken {
-    function balanceOf(address account) external view returns (uint256);
-    function allowance(address owner, address spender) external view returns (uint256);
-    function transferFrom(
-    address sender,
-    address recipient,
-    uint256 amount
-  ) external returns (bool);
-}
+// interface DaiToken {
+//     function balanceOf(address account) external view returns (uint256);
+//     function allowance(address owner, address spender) external view returns (uint256);
+//     function transferFrom(
+//     address sender,
+//     address recipient,
+//     uint256 amount
+//   ) external returns (bool);
+// }
 
 contract BusinessNFT is ERC721URIStorage {
 
     //PunkCity private _PunkCity;
     uint256 businessNumber = 0;
-    DaiToken public daiToken;
+    // DaiToken public daiToken;
     address payable Vault;
 
     struct businessDetails {
@@ -56,8 +56,6 @@ contract BusinessNFT is ERC721URIStorage {
     mapping(uint256 => string) tokenIdtoIpfsHash;
 
     constructor() ERC721("BusinessNFT", "BT") {
-        daiToken = DaiToken(0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F);
-        // Vault = _Vault;
     } 
     // Before calling this function we need to approve the token allowance for address(this) via external call
     function createBusiness(string memory cityName, string memory _businessType, string memory kind, string memory description,  string memory name, string memory _googleAddress, string[] memory _services, string memory URI, string memory ipfsHash) external payable {
@@ -77,7 +75,6 @@ contract BusinessNFT is ERC721URIStorage {
         ownIpfsHash[msg.sender][businessNumber] = ipfsHash;
         tokenIdtoIpfsHash[businessNumber] = ipfsHash;
         businessNumber++;
-        daiToken.transferFrom(msg.sender, Vault, 100000000000000000); // 0.01 DAI
     }
 
     function addVaultContract(address payable _Vault) public {
@@ -116,11 +113,6 @@ contract BusinessNFT is ERC721URIStorage {
     function ownsABusiness(address _businessOwner) public view returns (bool) {
         return registeredABusiness[_businessOwner];
     }
-
-    function checkApproval(address _address) public view returns (bool){
-        return registeredABusiness[_address];
-    }
-
     function listAllBusinessNfts() public view returns(businessDetails[] memory) {
         return businesses;
     }
@@ -163,4 +155,7 @@ contract BusinessNFT is ERC721URIStorage {
         return downVotes[_businessId];
     }
 
+    function getBusinessNumber() public view returns (uint256){
+        return businessNumber;
+    }
 }
