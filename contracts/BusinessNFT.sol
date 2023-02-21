@@ -76,11 +76,6 @@ contract BusinessNFT is ERC721URIStorage {
         tokenIdtoIpfsHash[businessNumber] = ipfsHash;
         businessNumber++;
     }
-
-    function addVaultContract(address payable _Vault) public {
-        Vault = _Vault;
-    }
-
     function getBusiness(uint256 _id) public view returns(uint256, string memory, string memory, address, string memory, uint256, string[] memory) {
         return (businesses[_id].tokenId, businesses[_id].city, businesses[_id].shortname, businesses[_id].owner,
                 businesses[_id].googleAddress, businesses[_id].createdAt, businesses[_id].services);

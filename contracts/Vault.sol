@@ -57,7 +57,7 @@ contract Vault {
 
     constructor(address _productAddress){
         setContracts(_productAddress);
-        daiTokenVault = DaiTokenVault(0xF14f9596430931E177469715c591513308244e8F);
+        daiTokenVault = DaiTokenVault(0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F);
         iLendingPool = ILendingPool(0x0b913A76beFF3887d35073b8e5530755D60F78C7);
     }
     
