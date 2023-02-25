@@ -53,11 +53,12 @@ contract Vault {
     mapping(address => uint256) userSupplyAvailability;
     mapping(address => bool) contractApproved;
 
+    uint256 totalBalance = 0;
     uint256 totalSales = 0;
 
     constructor(address _productAddress){
         setContracts(_productAddress);
-        daiTokenVault = DaiTokenVault(0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F);
+        daiTokenVault = DaiTokenVault(0xF14f9596430931E177469715c591513308244e8F);
         iLendingPool = ILendingPool(0x0b913A76beFF3887d35073b8e5530755D60F78C7);
     }
     
@@ -66,16 +67,16 @@ contract Vault {
     }
     
     function buy(uint256 serviceId, uint256 _businessId, address _buyerAddress) public  {
-        require(_productNFT.getOwnerOfService(serviceId) != msg.sender, "You cannot buy your own service");
+        require(_productNFT.getOwnerOfService(serviceId) != _buyerAddress, "You cannot buy your own service");
         // require for nonexistentBusiness
         uint256 price = _productNFT.getPriceForAService(serviceId);
         // require(daiTokenVault.balanceOf(msg.sender) >= price, "you want to pay less than the actual price");
         // require(daiTokenVault.allowance(msg.sender, address(this)) >= price, "You don't have enough allowance to buy this product");
-        address  receiver = _productNFT.getOwnerOfService(serviceId);
+        address receiver = _productNFT.getOwnerOfService(serviceId);
 
         userSupplyAvailability[_buyerAddress] += price;
-        totalSales += price;
-
+        totalBalance += price;
+        totalSales++;
         daiTokenVault.transferFrom(msg.sender, receiver, price / 10 * 9);
         daiTokenVault.transferFrom(msg.sender, address(this), price / 10);
         // receiver.transfer(msg.value / 10 * 9);  90% to seller 10% to Vault
@@ -119,10 +120,11 @@ contract Vault {
     }
 
     function aaveDeposit(address _address, uint256 _amount) public {
-        // require(userSupplyAvailability[_address] >= _amount, "You do not have any allowance to supply any DAI to the pool");
+        require(userSupplyAvailability[_address] >= _amount, "You do not have any allowance to supply any DAI to the pool");
 
         iLendingPool.deposit(0xF14f9596430931E177469715c591513308244e8F, _amount, msg.sender, 0);
-        // userSupplyAvailability[_address] -= _amount;
+        userSupplyAvailability[_address] -= _amount;
+        totalBalance -= _amount;
         // asset address is the DAI address in this example
         // onBehalfOf address is
         // referralCode is always 0
@@ -133,6 +135,10 @@ contract Vault {
 
         // 1. You need to send aPolDai to this contract
         // 2. You can hit the Withdraw button 
+    }
+
+    function getTotalBalance() public view returns (uint256){
+      return totalBalance;
     }
 }
 
