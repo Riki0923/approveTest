@@ -52,9 +52,9 @@ contract Vault {
     mapping(address => bool) daiApproved;
     mapping(address => uint256) userSupplyAvailability;
     mapping(address => bool) contractApproved;
+    mapping(address => uint256) totalSales;
 
     uint256 totalBalance = 0;
-    uint256 totalSales = 0;
 
     constructor(address _productAddress){
         setContracts(_productAddress);
@@ -66,7 +66,7 @@ contract Vault {
         _productNFT = productNFT(_productAddress);
     }
     
-    function buy(uint256 serviceId, uint256 _businessId, address _buyerAddress) public  {
+    function buy(uint256 _businessId, uint256 serviceId, address _buyerAddress) public  {
         require(_productNFT.getOwnerOfService(serviceId) != _buyerAddress, "You cannot buy your own service");
         // require for nonexistentBusiness
         uint256 price = _productNFT.getPriceForAService(serviceId);
@@ -76,14 +76,14 @@ contract Vault {
 
         userSupplyAvailability[_buyerAddress] += price;
         totalBalance += price;
-        totalSales++;
+        totalSales[receiver]+= price;
         daiTokenVault.transferFrom(msg.sender, receiver, price / 10 * 9);
         daiTokenVault.transferFrom(msg.sender, address(this), price / 10);
         // receiver.transfer(msg.value / 10 * 9);  90% to seller 10% to Vault
         if(daiApproved[_buyerAddress] == false){
             daiApproved[_buyerAddress] = true;
         }
-        _productNFT.buyService(serviceId, _businessId);
+        _productNFT.buyService(_businessId, serviceId);
     }
 
     function getVaultBalance() public view returns(uint256){
@@ -103,12 +103,10 @@ contract Vault {
       if(contractApproved[_caller] == false){
         contractApproved[_caller] = true;
       }
-      // ez kell a supplyhoz
-      // withdrawnál pedig kell a sima metamask sending
     }
 
-    function getTotalSales() public view returns (uint256){
-      return totalSales;
+    function getTotalSales(address _owner) public view returns (uint256){
+      return totalSales[_owner];
     }
 
     function IsAaveApproved(address _caller) public view returns(bool){
@@ -125,29 +123,13 @@ contract Vault {
         iLendingPool.deposit(0xF14f9596430931E177469715c591513308244e8F, _amount, msg.sender, 0);
         userSupplyAvailability[_address] -= _amount;
         totalBalance -= _amount;
-        // asset address is the DAI address in this example
-        // onBehalfOf address is
-        // referralCode is always 0
     }
 
     function aaveWithdraw(uint256 _amount) public {
         iLendingPool.withdraw(0xF14f9596430931E177469715c591513308244e8F, _amount, msg.sender);
-
-        // 1. You need to send aPolDai to this contract
-        // 2. You can hit the Withdraw button 
     }
 
     function getTotalBalance() public view returns (uint256){
       return totalBalance;
     }
 }
-
-
-    // function aaveSupply(address _address, uint256 _amount) public {
-    //     // require(userSupplyAvailability[_sender] > 0, "You do not have any allowance to supply any DAI to the pool");
-    //     iLendingPool.supply(_address, _amount, msg.sender, 0);
-
-    //     // You need to send the amount to the Vault Contract first
-    //     // Then you have to use the approveAaveContract function which is approving Dai on this contract
-    //     // then you can hit on Supply
-    // }

@@ -22,7 +22,7 @@ contract productNFT is ERC721URIStorage{
     struct Service {
         uint256 serviceId;
         uint256 price;
-        address payable owner;
+        address owner;
         // string _serviceName;
         string serviceDescription;
         bool sold;
@@ -42,7 +42,7 @@ contract productNFT is ERC721URIStorage{
         require(_BusinessNFT.ownsABusiness(msg.sender) == true, "You cannot create a service as you do not own a BusinessNFT");
         _mint(msg.sender, serviceId);
         _setTokenURI(serviceId, tokenURI);
-        Service memory addService = Service(serviceId, servicePrice, payable(msg.sender), _serviceDescription, false, tokenURI);
+        Service memory addService = Service(serviceId, servicePrice, msg.sender, _serviceDescription, false, tokenURI);
         ServicesOfBusiness[businessId].push(addService);
         newService.push(addService);
         serviceName[serviceId] = _serviceDescription;
@@ -54,18 +54,22 @@ contract productNFT is ERC721URIStorage{
         require(newService[_serviceId].owner != msg.sender, "You cannot buy your own service");
         require(newService[_serviceId].sold == false, "This service has already been bought or id unavailable");
 
-        // newService[_serviceId].sold = true;
-        ServicesOfBusiness[_businessId][_serviceId].sold = true;
-        
+        // for(uint256 i = 0; i < ServicesOfBusiness[_businessId].length; i++){
+        //             if(ServicesOfBusiness[_businessId][i].serviceId == _serviceId){
+        //                 ServicesOfBusiness[_businessId][i].sold = true;
+        //                 break;
+        //             }
+        //         }
+        newService[_serviceId].sold = true;
 
         //Service memory deletedService = deleteService(_serviceId);
         incomeOfBusiness[_businessId] += newService[_serviceId].price;
         soldNFTs[_businessId]++;
-        
-        //deleteService(_serviceId);
-        _burn(_serviceId);
-        //userServices[msg.sender].push(deleteService(_serviceId));
 
+        _deleteServiceBusiness(_businessId, _serviceId);
+        // deleteService(_serviceId);
+        // _burn(_serviceId);
+        //userServices[msg.sender].push(deleteService(_serviceId));
     }
 
     function getIncomeOfBusiness(uint256 _businessId) public view returns (uint256) {
@@ -76,7 +80,7 @@ contract productNFT is ERC721URIStorage{
         return newService[_id].price;
     }
 
-    function getOwnerOfService(uint256 _id) public view returns (address payable) {
+    function getOwnerOfService(uint256 _id) public view returns (address) {
         return newService[_id].owner;
     }
 
@@ -96,6 +100,23 @@ contract productNFT is ERC721URIStorage{
         newService.pop();
         return founded;
     }
+
+    function _deleteServiceBusiness(uint256 _businessId, uint256 _serviceId) public returns (Service memory){
+        Service memory toBeDeleted;
+        bool founded = false;
+        for(uint256 i = 0; i < ServicesOfBusiness[_businessId].length; i++){
+            if(ServicesOfBusiness[_businessId][i].serviceId == _serviceId){
+                toBeDeleted = ServicesOfBusiness[_businessId][i];
+                founded = true;
+                continue;
+            }
+            if(founded){
+                ServicesOfBusiness[_businessId][i - 1] = ServicesOfBusiness[_businessId][i];
+            }
+        }
+        ServicesOfBusiness[_businessId].pop();
+        return toBeDeleted;
+    }
     
     function getService(uint256 _serviceId) public view returns(uint256, string memory, bool){
         return(newService[_serviceId].serviceId,
@@ -113,6 +134,10 @@ contract productNFT is ERC721URIStorage{
 
     function listMyServices(uint256 _businessId) public view returns (Service[] memory){
         return ServicesOfBusiness[_businessId]; // This is actually listServicesById!!!
+    }
+
+    function listAllServices() public view returns(Service[] memory){
+        return newService;
     }
 
     function getSoldNFTs(uint256 _serviceId) public view returns(uint256){

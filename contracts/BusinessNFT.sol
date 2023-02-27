@@ -36,6 +36,8 @@ contract BusinessNFT is ERC721URIStorage {
         uint256 createdAt; // timestamp
         string[] services; // services
         string ipfsHash;
+        uint16 upVotes;
+        uint16 downVotes;
     }
 
     businessDetails [] businesses;
@@ -54,17 +56,19 @@ contract BusinessNFT is ERC721URIStorage {
     mapping(address => mapping(uint256 => string)) ownIpfsHash; // needed for retrieving the logo pictures in the own business site
     mapping(address => mapping(uint256 => string)) tokenIdHash;
     mapping(uint256 => string) tokenIdtoIpfsHash;
+    mapping(address => uint256) businessCount;
 
     constructor() ERC721("BusinessNFT", "BT") {
+        
     } 
     // Before calling this function we need to approve the token allowance for address(this) via external call
-    function createBusiness(string memory cityName, string memory _businessType, string memory kind, string memory description,  string memory name, string memory _googleAddress, string[] memory _services, string memory URI, string memory ipfsHash) external payable {
+    function createBusiness(string memory cityName, string memory _businessType, string memory kind, string memory description,  string memory name, string memory _googleAddress, string[] memory _services, string memory URI, string memory ipfsHash) public {
         //require(_PunkCity.checkRegisteredPlace(msg.sender) == true, "You must be registered for Punk Cities in order to create a Business");
         //require(registeredABusiness[msg.sender] == false, "You already own a business");
         // require(daiToken.balanceOf(msg.sender) >= 100000000000000000, "You do not have enough Dai to mint this NFT");
         // require(daiToken.allowance(msg.sender, address(this)) <= 100000000000000000, "Not enough allowance");
         // require(daiToken.transferFrom(msg.sender, Vault, 100000000000000000), "ERC20 transfer failed");
-        businessDetails memory nextBusiness = businessDetails(businesses.length, cityName, _businessType, kind, description, name, msg.sender, _googleAddress, block.timestamp, _services, ipfsHash);
+        businessDetails memory nextBusiness = businessDetails(businesses.length, cityName, _businessType, kind, description, name, msg.sender, _googleAddress, block.timestamp, _services, ipfsHash, 0, 0);
         businesses.push(nextBusiness);
         myBusinessess[msg.sender].push(nextBusiness);
         _mint(msg.sender, businessNumber);
@@ -74,6 +78,7 @@ contract BusinessNFT is ERC721URIStorage {
         businessbyOwner[msg.sender] = nextBusiness;
         ownIpfsHash[msg.sender][businessNumber] = ipfsHash;
         tokenIdtoIpfsHash[businessNumber] = ipfsHash;
+        businessCount[msg.sender]++;
         businessNumber++;
     }
     function getBusiness(uint256 _id) public view returns(uint256, string memory, string memory, address, string memory, uint256, string[] memory) {
@@ -130,6 +135,7 @@ contract BusinessNFT is ERC721URIStorage {
 
     function upVote(uint256 _businessId) public returns (bool) {
         require(alreadyVoted[_businessId][msg.sender] == false, "You cannot vote on a business more than once");
+        businesses[_businessId].upVotes++;
         alreadyVoted[_businessId][msg.sender] = true;
         upVotes[_businessId]++;
         return true;
@@ -137,6 +143,7 @@ contract BusinessNFT is ERC721URIStorage {
 
     function downVote(uint256 _businessId) public returns (bool) {
         require(alreadyVoted[_businessId][msg.sender] == false, "You cannot vote on a business more than once");
+        businesses[_businessId].downVotes++;
         alreadyVoted[_businessId][msg.sender] = true;
         downVotes[_businessId]++;
         return true;
@@ -150,7 +157,7 @@ contract BusinessNFT is ERC721URIStorage {
         return downVotes[_businessId];
     }
 
-    function getBusinessNumber() public view returns (uint256){
-        return businessNumber;
+    function getBusinessNumber(address _owner) public view returns (uint256){
+        return businessCount[_owner];
     }
 }
