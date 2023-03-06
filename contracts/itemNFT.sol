@@ -199,3 +199,4 @@ contract itemNFT is ERC721URIStorage {
         return userSoldServices[msg.sender];
     }
 }
+
