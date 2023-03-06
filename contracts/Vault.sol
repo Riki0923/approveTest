@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./productNFT.sol";
-
+import "./itemNFT.sol";
 
  interface DaiTokenVault {
     function balanceOf(address account) external view returns (uint256);
@@ -15,6 +14,10 @@ import "./productNFT.sol";
     uint256 amount
   ) external returns (bool);
 }
+
+  interface aPolDAI {
+    function balanceOf(address user) external view returns (uint256);
+  }
 
 interface ILendingPool {
 
@@ -42,8 +45,10 @@ interface ILendingPool {
 contract Vault {
 
     DaiTokenVault public daiTokenVault;
-    productNFT private _productNFT;
+    itemNFT private _itemNFT;
     ILendingPool public iLendingPool;
+    aPolDAI public _apolDAI;
+
 
     // 0xF14f9596430931E177469715c591513308244e8F - V3 DAI contract
     // daiTokenVault V2 = DaiTokenVault(0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F);
@@ -56,41 +61,46 @@ contract Vault {
 
     uint256 totalBalance = 0;
 
-    constructor(address _productAddress){
-        setContracts(_productAddress);
+    constructor(address _itemAddress){
+        setContracts(_itemAddress);
         daiTokenVault = DaiTokenVault(0xF14f9596430931E177469715c591513308244e8F);
         iLendingPool = ILendingPool(0x0b913A76beFF3887d35073b8e5530755D60F78C7);
+        _apolDAI = aPolDAI(0xFAF6a49b4657D9c8dDa675c41cB9a05a94D3e9e9);
     }
     
-    function setContracts(address _productAddress) public {
-        _productNFT = productNFT(_productAddress);
+    function setContracts(address _itemAddress) public {
+        _itemNFT = itemNFT(_itemAddress);
     }
     
     function buy(uint256 _businessId, uint256 serviceId, address _buyerAddress) public  {
-        require(_productNFT.getOwnerOfService(serviceId) != _buyerAddress, "You cannot buy your own service");
+        require(_itemNFT.getOwnerOfService(serviceId) != _buyerAddress, "You cannot buy your own service");
         // require for nonexistentBusiness
-        uint256 price = _productNFT.getPriceForAService(serviceId);
+        uint256 price = _itemNFT.getPriceForAService(serviceId);
         // require(daiTokenVault.balanceOf(msg.sender) >= price, "you want to pay less than the actual price");
         // require(daiTokenVault.allowance(msg.sender, address(this)) >= price, "You don't have enough allowance to buy this product");
-        address receiver = _productNFT.getOwnerOfService(serviceId);
+        address receiver = _itemNFT.getOwnerOfService(serviceId);
 
-        userSupplyAvailability[_buyerAddress] += price;
+        userSupplyAvailability[receiver] += price ; // 100% goes into Vault now
         totalBalance += price;
         totalSales[receiver]+= price;
-        daiTokenVault.transferFrom(msg.sender, receiver, price / 10 * 9);
-        daiTokenVault.transferFrom(msg.sender, address(this), price / 10);
+
+        daiTokenVault.transferFrom(msg.sender, address(this), price);
+        // daiTokenVault.transferFrom(msg.sender, receiver, price / 10 * 9); // 90% DAI to the receiver
+        // daiTokenVault.transferFrom(msg.sender, address(this), price / 10); // 10% DAI to the Vault
         // receiver.transfer(msg.value / 10 * 9);  90% to seller 10% to Vault
         if(daiApproved[_buyerAddress] == false){
             daiApproved[_buyerAddress] = true;
         }
-        _productNFT.buyService(_businessId, serviceId);
+        _itemNFT.buyService(_businessId, serviceId);
     }
 
     function getVaultBalance() public view returns(uint256){
         return daiTokenVault.balanceOf(address(this));
     }
 
-    function sendSomethingOut(address _address, uint256 daiAmount) public payable {
+    function sendDaiOut(address _address, uint256 daiAmount) public payable {
+        require(userSupplyAvailability[_address] >= daiAmount, "You do not have that much DAI in the vault which you can send out");
+        userSupplyAvailability[_address] -= daiAmount;
         daiTokenVault.transfer(_address, daiAmount);
     }
 
@@ -132,4 +142,18 @@ contract Vault {
     function getTotalBalance() public view returns (uint256){
       return totalBalance;
     }
+
+    function getWithdrawBalance() public view returns (uint256){
+      return _apolDAI.balanceOf(msg.sender);
+    }
+
+    function getYourDaiBalance(address _user) public view returns (uint256){
+      return daiTokenVault.balanceOf(_user);
+    }
+
+    function directSupply(uint256 _amount) public {
+      daiTokenVault.transferFrom(msg.sender, address(this), _amount);
+      iLendingPool.deposit(0xF14f9596430931E177469715c591513308244e8F, _amount, msg.sender, 0);
+    }
 }
+

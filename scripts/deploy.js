@@ -6,7 +6,6 @@
 // global scope, and execute the script.
 const { ethers } = require("hardhat");
 const hre = require("hardhat");
-const { ThemeProvider } = require("styled-components");
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -17,16 +16,16 @@ async function main() {
   const businessNFT = await BusinessNFT.deploy();
 
   // Deploy Second
-  const productNFT = await ethers.getContractFactory('productNFT');
-  const productnft = await productNFT.deploy(businessNFT.address);
+  const ItemNFT = await ethers.getContractFactory('itemNFT');
+  const itemNFT = await ItemNFT.deploy(businessNFT.address);
 
   // Deploy Third
 
   const Vault = await ethers.getContractFactory('Vault');
-  const vault = await Vault.deploy(productnft.address)
+  const vault = await Vault.deploy(itemNFT.address)
 
   console.log( "BusinessNFT: " + businessNFT.address );
-  console.log( "ProductNFT: " + productnft.address ); 
+  console.log( "ProductNFT: " + itemNFT.address ); 
   console.log( "Vault: " + vault.address )
 }
 

@@ -4,14 +4,12 @@ pragma solidity ^0.8.10;
 import "./BusinessNFT.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
-
-contract productNFT is ERC721URIStorage{
-
+contract itemNFT is ERC721URIStorage {
     BusinessNFT private _BusinessNFT;
     uint256 serviceId = 0;
     address payable productVault;
 
-    constructor(address businessContract) ERC721("Service NFT", "SFT")  {
+    constructor(address businessContract) ERC721("Service NFT", "SFT") {
         setBusinessContract(businessContract);
     }
 
@@ -29,20 +27,35 @@ contract productNFT is ERC721URIStorage{
         string tokenURI;
     }
 
-    Service [] newService;
+    Service[] newService;
 
     mapping(uint256 => Service[]) ServicesOfBusiness; // This tracks which business has which Services
     mapping(uint256 => string) serviceName;
     mapping(address => Service[]) public userServices; // your Service
     mapping(uint256 => uint256) incomeOfBusiness;
     mapping(uint256 => uint256) soldNFTs;
+    mapping(address => Service[]) userSoldServices;
 
-
-    function makeService(uint256 servicePrice, string memory _serviceDescription, string memory tokenURI, uint256 businessId) public {
-        require(_BusinessNFT.ownsABusiness(msg.sender) == true, "You cannot create a service as you do not own a BusinessNFT");
+    function makeService(
+        uint256 servicePrice,
+        string memory _serviceDescription,
+        string memory tokenURI,
+        uint256 businessId
+    ) public {
+        require(
+            _BusinessNFT.ownsABusiness(msg.sender) == true,
+            "You cannot create a service as you do not own a BusinessNFT"
+        );
         _mint(msg.sender, serviceId);
         _setTokenURI(serviceId, tokenURI);
-        Service memory addService = Service(serviceId, servicePrice, msg.sender, _serviceDescription, false, tokenURI);
+        Service memory addService = Service(
+            serviceId,
+            servicePrice,
+            msg.sender,
+            _serviceDescription,
+            false,
+            tokenURI
+        );
         ServicesOfBusiness[businessId].push(addService);
         newService.push(addService);
         serviceName[serviceId] = _serviceDescription;
@@ -51,8 +64,14 @@ contract productNFT is ERC721URIStorage{
     }
 
     function buyService(uint256 _businessId, uint256 _serviceId) public {
-        require(newService[_serviceId].owner != msg.sender, "You cannot buy your own service");
-        require(newService[_serviceId].sold == false, "This service has already been bought or id unavailable");
+        require(
+            newService[_serviceId].owner != msg.sender,
+            "You cannot buy your own service"
+        );
+        require(
+            newService[_serviceId].sold == false,
+            "This service has already been bought or id unavailable"
+        );
 
         // for(uint256 i = 0; i < ServicesOfBusiness[_businessId].length; i++){
         //             if(ServicesOfBusiness[_businessId][i].serviceId == _serviceId){
@@ -61,7 +80,16 @@ contract productNFT is ERC721URIStorage{
         //             }
         //         }
         newService[_serviceId].sold = true;
-
+        Service memory newSoldService = Service(
+            newService[_serviceId].serviceId,
+            newService[_serviceId].price,
+            newService[_serviceId].owner,
+            newService[_serviceId].serviceDescription,
+            newService[_serviceId].sold,
+            newService[_serviceId].tokenURI
+        );
+        address owner = newService[_serviceId].owner;
+        userSoldServices[owner].push(newSoldService);
         //Service memory deletedService = deleteService(_serviceId);
         incomeOfBusiness[_businessId] += newService[_serviceId].price;
         soldNFTs[_businessId]++;
@@ -72,11 +100,15 @@ contract productNFT is ERC721URIStorage{
         //userServices[msg.sender].push(deleteService(_serviceId));
     }
 
-    function getIncomeOfBusiness(uint256 _businessId) public view returns (uint256) {
+    function getIncomeOfBusiness(uint256 _businessId)
+        public
+        view
+        returns (uint256)
+    {
         return incomeOfBusiness[_businessId];
     }
 
-    function getPriceForAService(uint256 _id) public view returns(uint256){
+    function getPriceForAService(uint256 _id) public view returns (uint256) {
         return newService[_id].price;
     }
 
@@ -84,16 +116,16 @@ contract productNFT is ERC721URIStorage{
         return newService[_id].owner;
     }
 
-    function deleteService(uint256 _deletedId) public returns(Service memory) {
+    function deleteService(uint256 _deletedId) public returns (Service memory) {
         Service memory founded;
         bool found = false;
-        for(uint256 i = 0; i < newService.length -1; i++){
-            if(newService[i].serviceId == _deletedId){
+        for (uint256 i = 0; i < newService.length - 1; i++) {
+            if (newService[i].serviceId == _deletedId) {
                 founded = newService[i];
                 found = true;
                 continue;
             }
-            if(found){
+            if (found) {
                 newService[i - 1] = newService[i];
             }
         }
@@ -101,27 +133,42 @@ contract productNFT is ERC721URIStorage{
         return founded;
     }
 
-    function _deleteServiceBusiness(uint256 _businessId, uint256 _serviceId) public returns (Service memory){
+    function _deleteServiceBusiness(uint256 _businessId, uint256 _serviceId)
+        public
+        returns (Service memory)
+    {
         Service memory toBeDeleted;
         bool founded = false;
-        for(uint256 i = 0; i < ServicesOfBusiness[_businessId].length; i++){
-            if(ServicesOfBusiness[_businessId][i].serviceId == _serviceId){
+        for (uint256 i = 0; i < ServicesOfBusiness[_businessId].length; i++) {
+            if (ServicesOfBusiness[_businessId][i].serviceId == _serviceId) {
                 toBeDeleted = ServicesOfBusiness[_businessId][i];
                 founded = true;
                 continue;
             }
-            if(founded){
-                ServicesOfBusiness[_businessId][i - 1] = ServicesOfBusiness[_businessId][i];
+            if (founded) {
+                ServicesOfBusiness[_businessId][i - 1] = ServicesOfBusiness[
+                    _businessId
+                ][i];
             }
         }
         ServicesOfBusiness[_businessId].pop();
         return toBeDeleted;
     }
-    
-    function getService(uint256 _serviceId) public view returns(uint256, string memory, bool){
-        return(newService[_serviceId].serviceId,
-               newService[_serviceId].serviceDescription,
-               newService[_serviceId].sold);
+
+    function getService(uint256 _serviceId)
+        public
+        view
+        returns (
+            uint256,
+            string memory,
+            bool
+        )
+    {
+        return (
+            newService[_serviceId].serviceId,
+            newService[_serviceId].serviceDescription,
+            newService[_serviceId].sold
+        );
     }
 
     // function getServicesForOwner() public view returns (Service[] memory){
@@ -132,15 +179,23 @@ contract productNFT is ERC721URIStorage{
     //     return newService;
     // }
 
-    function listMyServices(uint256 _businessId) public view returns (Service[] memory){
+    function listMyServices(uint256 _businessId)
+        public
+        view
+        returns (Service[] memory)
+    {
         return ServicesOfBusiness[_businessId]; // This is actually listServicesById!!!
     }
 
-    function listAllServices() public view returns(Service[] memory){
+    function listAllServices() public view returns (Service[] memory) {
         return newService;
     }
 
-    function getSoldNFTs(uint256 _serviceId) public view returns(uint256){
+    function getSoldNFTs(uint256 _serviceId) public view returns (uint256) {
         return soldNFTs[_serviceId];
+    }
+
+    function getSoldServices() public view returns (Service[] memory){
+        return userSoldServices[msg.sender];
     }
 }
