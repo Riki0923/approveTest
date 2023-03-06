@@ -25,7 +25,7 @@ async function main() {
   const vault = await Vault.deploy(itemNFT.address)
 
   console.log( "BusinessNFT: " + businessNFT.address );
-  console.log( "ProductNFT: " + itemNFT.address ); 
+  console.log( "itemNFT: " + itemNFT.address ); 
   console.log( "Vault: " + vault.address )
 }
 

@@ -34,7 +34,7 @@ contract itemNFT is ERC721URIStorage {
     mapping(address => Service[]) public userServices; // your Service
     mapping(uint256 => uint256) incomeOfBusiness;
     mapping(uint256 => uint256) soldNFTs;
-    mapping(address => Service[]) userSoldServices;
+    mapping(uint256 => Service[]) userSoldServices;
 
     function makeService(
         uint256 servicePrice,
@@ -88,8 +88,7 @@ contract itemNFT is ERC721URIStorage {
             newService[_serviceId].sold,
             newService[_serviceId].tokenURI
         );
-        address owner = newService[_serviceId].owner;
-        userSoldServices[owner].push(newSoldService);
+        userSoldServices[_businessId].push(newSoldService);
         //Service memory deletedService = deleteService(_serviceId);
         incomeOfBusiness[_businessId] += newService[_serviceId].price;
         soldNFTs[_businessId]++;
@@ -195,8 +194,8 @@ contract itemNFT is ERC721URIStorage {
         return soldNFTs[_serviceId];
     }
 
-    function getSoldServices() public view returns (Service[] memory){
-        return userSoldServices[msg.sender];
+    function getSoldServices(uint256 _businessId) public view returns (Service[] memory){
+        return userSoldServices[_businessId];
     }
 }
 
