@@ -58,6 +58,7 @@ contract Vault {
     mapping(address => uint256) userSupplyAvailability;
     mapping(address => bool) contractApproved;
     mapping(address => uint256) totalSales;
+    mapping(address => bool) hasSupplied;
 
     uint256 totalBalance = 0;
 
@@ -133,6 +134,7 @@ contract Vault {
         iLendingPool.deposit(0xF14f9596430931E177469715c591513308244e8F, _amount, msg.sender, 0);
         userSupplyAvailability[_address] -= _amount;
         totalBalance -= _amount;
+        hasSupplied[msg.sender] = true;
     }
 
     function aaveWithdraw(uint256 _amount) public {
@@ -152,8 +154,11 @@ contract Vault {
     }
 
     function directSupply(uint256 _amount) public {
-      daiTokenVault.transferFrom(msg.sender, address(this), _amount);
       iLendingPool.deposit(0xF14f9596430931E177469715c591513308244e8F, _amount, msg.sender, 0);
+    }
+
+    function isSupplied() public view returns(bool){
+      return hasSupplied[msg.sender];
     }
 }
 

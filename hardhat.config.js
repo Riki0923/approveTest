@@ -8,7 +8,7 @@ module.exports = {
     hardhat: {},
     mumbai: {
       url: "https://rpc-mumbai.maticvigil.com",
-      accounts: ["0x1cbd3cf2dcf13b0c0dfdf13d1069475cb10cd4fff495a1c67a104f3e4f8e4ef1"],
+      accounts: ["2ddc16fed89ecb3dbef95146b91ca1d5954dece2c4e6064e373597e26c9b4506"],
     },
   },
   etherscan: {

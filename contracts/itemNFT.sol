@@ -25,6 +25,7 @@ contract itemNFT is ERC721URIStorage {
         string serviceDescription;
         bool sold;
         string tokenURI;
+        string businessName;
     }
 
     Service[] newService;
@@ -35,6 +36,7 @@ contract itemNFT is ERC721URIStorage {
     mapping(uint256 => uint256) incomeOfBusiness;
     mapping(uint256 => uint256) soldNFTs;
     mapping(uint256 => Service[]) userSoldServices;
+    mapping(address => Service[]) userAllSoldServices;
 
     function makeService(
         uint256 servicePrice,
@@ -46,6 +48,9 @@ contract itemNFT is ERC721URIStorage {
             _BusinessNFT.ownsABusiness(msg.sender) == true,
             "You cannot create a service as you do not own a BusinessNFT"
         );
+
+        string memory businessName = _BusinessNFT.getbusinessName(businessId);
+
         _mint(msg.sender, serviceId);
         _setTokenURI(serviceId, tokenURI);
         Service memory addService = Service(
@@ -54,7 +59,8 @@ contract itemNFT is ERC721URIStorage {
             msg.sender,
             _serviceDescription,
             false,
-            tokenURI
+            tokenURI,
+            businessName
         );
         ServicesOfBusiness[businessId].push(addService);
         newService.push(addService);
@@ -86,9 +92,11 @@ contract itemNFT is ERC721URIStorage {
             newService[_serviceId].owner,
             newService[_serviceId].serviceDescription,
             newService[_serviceId].sold,
-            newService[_serviceId].tokenURI
+            newService[_serviceId].tokenURI,
+            newService[_serviceId].businessName
         );
         userSoldServices[_businessId].push(newSoldService);
+        userAllSoldServices[msg.sender].push(newSoldService);
         //Service memory deletedService = deleteService(_serviceId);
         incomeOfBusiness[_businessId] += newService[_serviceId].price;
         soldNFTs[_businessId]++;
@@ -196,6 +204,10 @@ contract itemNFT is ERC721URIStorage {
 
     function getSoldServices(uint256 _businessId) public view returns (Service[] memory){
         return userSoldServices[_businessId];
+    }
+
+    function getAllSoldServices() public view returns (Service[] memory){
+        return userAllSoldServices[msg.sender];
     }
 }
 

@@ -86,6 +86,10 @@ contract BusinessNFT is ERC721URIStorage {
                 businesses[_id].googleAddress, businesses[_id].createdAt, businesses[_id].services);
     }
 
+    function getbusinessName(uint256 _id) public view returns(string memory){
+        return(businesses[_id].shortname);
+    }
+
     function getBusinessByOwner() public view returns (businessDetails memory){
         return businessbyOwner[msg.sender];
     }
