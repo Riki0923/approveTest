@@ -69,7 +69,7 @@ contract itemNFT is ERC721URIStorage {
         serviceId++;
     }
 
-    function buyService(uint256 _businessId, uint256 _serviceId) public {
+    function buyService(uint256 _businessId, uint256 _serviceId, address _buyerAddress) public {
         require(
             newService[_serviceId].owner != msg.sender,
             "You cannot buy your own service"
@@ -96,7 +96,7 @@ contract itemNFT is ERC721URIStorage {
             newService[_serviceId].businessName
         );
         userSoldServices[_businessId].push(newSoldService);
-        userAllSoldServices[msg.sender].push(newSoldService);
+        userAllSoldServices[_buyerAddress].push(newSoldService);
         //Service memory deletedService = deleteService(_serviceId);
         incomeOfBusiness[_businessId] += newService[_serviceId].price;
         soldNFTs[_businessId]++;
@@ -165,6 +165,7 @@ contract itemNFT is ERC721URIStorage {
     function getService(uint256 _serviceId)
         public
         view
+        
         returns (
             uint256,
             string memory,
@@ -206,8 +207,8 @@ contract itemNFT is ERC721URIStorage {
         return userSoldServices[_businessId];
     }
 
-    function getAllSoldServices() public view returns (Service[] memory){
-        return userAllSoldServices[msg.sender];
+    function getAllSoldServices(address _buyerAddress) public view returns (Service[] memory){
+        return userAllSoldServices[_buyerAddress];
     }
 }
 
